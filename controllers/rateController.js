@@ -1,7 +1,6 @@
 const Rate = require("../models/Rate");
 
-// SET RATE (ADMIN)
-exports.setRate = async (req, res) => {
+const setRate = async (req, res) => {
   try {
     const { rate } = req.body;
 
@@ -19,8 +18,7 @@ exports.setRate = async (req, res) => {
   }
 };
 
-// GET RATE (USER + ADMIN)
-exports.getRate = async (req, res) => {
+const getRate = async (req, res) => {
   try {
     const data = await Rate.findOne();
     res.json({ rate: data ? data.rate : 0 });
