@@ -39,3 +39,5 @@ exports.deleteNews = async (req, res) => {
     res.status(500).json({ message: "News delete failed" });
   }
 };
+
+module.exports = { addNews, getNews, updateNews, deleteNews };

@@ -106,3 +106,12 @@ exports.deleteOrder = async (req, res) => {
     res.status(500).json({ message: "Delete failed" });
   }
 };
+
+
+module.exports = {
+  createOrder,
+  getMyOrders,
+  getAllOrders,
+  completeOrder,
+  deleteOrder
+};
