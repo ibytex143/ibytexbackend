@@ -48,6 +48,10 @@
 
 
 
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const Admin = require("../models/Admin");
+
 const adminLogin = async (req, res) => {
   try {
     console.log("JWT_SECRET:", process.env.JWT_SECRET);
@@ -93,4 +97,8 @@ const adminLogin = async (req, res) => {
       message: "Admin login failed",
     });
   }
+};
+
+module.exports = {
+  adminLogin,
 };
