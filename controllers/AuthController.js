@@ -26,7 +26,7 @@ const signup = async (req, res) => {
 
     if (!phoneRegex.test(phone)) {
       return res.status(400).json({
-        message: "Phone number must include country code (example: +918349742527)",
+        message: "Phone number must include country code (example: +91)",
         success: false,
       });
     }

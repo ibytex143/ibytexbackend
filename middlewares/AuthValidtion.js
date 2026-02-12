@@ -5,9 +5,9 @@ const signupValidation = (req , res , next) =>{
         name : joi.string().min(3).max(100).required(),
         email : joi.string().email().required(),
         password : joi.string().min(6).max(100).required(),
-        phone : joi.string()
-    .pattern(/^[0-9]{10}$/)
-    .required(),
+         phone: joi.string()
+      .pattern(/^\+\d{8,15}$/)
+      .required(),
 
   telegramId: joi.string().allow("").optional()
     })
