@@ -20,6 +20,10 @@ const userSchema = new Schema(
   required: true,
   unique: true,
 },
+isBlocked: {
+  type: Boolean,
+  default: false,
+},
 
     // ✅ OPTIONAL
     telegramId: {
