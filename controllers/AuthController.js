@@ -20,12 +20,13 @@ const signup = async (req, res) => {
       });
     }
 
-    // ✅ International phone validation
+    // ✅ INTERNATIONAL PHONE VALIDATION
+    // Accepts +85288797979, +918349742527, +12025550123 etc
     const phoneRegex = /^\+\d{8,15}$/;
 
     if (!phoneRegex.test(phone)) {
       return res.status(400).json({
-        message: "Invalid phone number format",
+        message: "Phone number must include country code (example: +918349742527)",
         success: false,
       });
     }
@@ -49,7 +50,7 @@ const signup = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      phone, // ✅ Country code ke saath save hoga
+      phone, // full international number saved
       telegramId,
       accountId,
     });

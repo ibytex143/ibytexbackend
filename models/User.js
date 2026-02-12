@@ -15,10 +15,11 @@ const userSchema = new Schema(
     },
 
     // ✅ NEW FIELD (REQUIRED)
-    phone: {
-      type: String,
-      required: true,
-    },
+ phone: {
+  type: String,
+  required: true,
+  unique: true,
+},
 
     // ✅ OPTIONAL
     telegramId: {
