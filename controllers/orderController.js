@@ -1,8 +1,7 @@
 const Order = require("../models/Order");
 
-
 // ================= USER → CREATE ORDER =================
-exports.createOrder = async (req, res) => {
+const createOrder = async (req, res) => {
   try {
     const {
       usdtAmount,
@@ -30,7 +29,7 @@ exports.createOrder = async (req, res) => {
       userPaymentDetails,
       receiptUrl: req.file ? `/uploads/${req.file.filename}` : null,
       status: "PENDING",
-      isDeletedByAdmin: false, // ✅ IMPORTANT
+      isDeletedByAdmin: false,
     });
 
     res.json({ success: true, orderId: order._id });
@@ -40,9 +39,8 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-
 // ================= USER → GET MY ORDERS =================
-exports.getMyOrders = async (req, res) => {
+const getMyOrders = async (req, res) => {
   const orders = await Order.find({ userId: req.user.id }).sort({
     createdAt: -1,
   });
@@ -50,9 +48,8 @@ exports.getMyOrders = async (req, res) => {
   res.json(orders);
 };
 
-
 // ================= ADMIN → GET ALL ORDERS =================
-exports.getAllOrders = async (req, res) => {
+const getAllOrders = async (req, res) => {
   const orders = await Order.find({ isDeletedByAdmin: false })
     .populate("userId", "name email accountId phone telegramId")
     .sort({ createdAt: -1 });
@@ -60,10 +57,8 @@ exports.getAllOrders = async (req, res) => {
   res.json(orders);
 };
 
-
-
 // ================= ADMIN → COMPLETE ORDER =================
-exports.completeOrder = async (req, res) => {
+const completeOrder = async (req, res) => {
   const { utrNumber } = req.body;
 
   if (!utrNumber) {
@@ -84,9 +79,8 @@ exports.completeOrder = async (req, res) => {
   res.json({ success: true });
 };
 
-
-// ================= ADMIN → SOFT DELETE ORDER =================
-exports.deleteOrder = async (req, res) => {
+// ================= ADMIN → DELETE ORDER =================
+const deleteOrder = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
 
@@ -94,7 +88,7 @@ exports.deleteOrder = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    order.isDeletedByAdmin = true; // ✅ SOFT DELETE
+    order.isDeletedByAdmin = true;
     await order.save();
 
     res.json({
@@ -107,11 +101,10 @@ exports.deleteOrder = async (req, res) => {
   }
 };
 
-
 module.exports = {
   createOrder,
   getMyOrders,
   getAllOrders,
   completeOrder,
-  deleteOrder
+  deleteOrder,
 };
