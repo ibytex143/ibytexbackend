@@ -1,6 +1,5 @@
 const router = require("express").Router();
 const adminAuth = require("../middlewares/adminAuth");
-
 const { adminLogin } = require("../controllers/adminController");
 const { setRate, getRate } = require("../controllers/rateController");
 const { addNews, getNews, updateNews , deleteNews } = require("../controllers/newsController");

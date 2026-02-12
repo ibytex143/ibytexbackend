@@ -28,3 +28,8 @@ exports.getRate = async (req, res) => {
     res.status(500).json({ message: "Rate fetch failed" });
   }
 };
+
+module.exports = {
+  setRate,
+  getRate,
+};
