@@ -1,23 +1,27 @@
 const News = require("../models/News");
 
 // ADD
-exports.addNews = async (req, res) => {
+const addNews = async (req, res) => {
   try {
     const news = await News.create({ text: req.body.text });
     res.json(news);
-  } catch {
+  } catch (error) {
     res.status(500).json({ message: "News add failed" });
   }
 };
 
 // GET
-exports.getNews = async (req, res) => {
-  const news = await News.find().sort({ createdAt: -1 });
-  res.json(news);
+const getNews = async (req, res) => {
+  try {
+    const news = await News.find().sort({ createdAt: -1 });
+    res.json(news);
+  } catch (error) {
+    res.status(500).json({ message: "News fetch failed" });
+  }
 };
 
-// ✏️ EDIT
-exports.updateNews = async (req, res) => {
+// EDIT
+const updateNews = async (req, res) => {
   try {
     const updated = await News.findByIdAndUpdate(
       req.params.id,
@@ -25,19 +29,24 @@ exports.updateNews = async (req, res) => {
       { new: true }
     );
     res.json(updated);
-  } catch {
+  } catch (error) {
     res.status(500).json({ message: "News update failed" });
   }
 };
 
-// 🗑️ DELETE
-exports.deleteNews = async (req, res) => {
+// DELETE
+const deleteNews = async (req, res) => {
   try {
     await News.findByIdAndDelete(req.params.id);
     res.json({ success: true });
-  } catch {
+  } catch (error) {
     res.status(500).json({ message: "News delete failed" });
   }
 };
 
-module.exports = { addNews, getNews, updateNews, deleteNews };
+module.exports = {
+  addNews,
+  getNews,
+  updateNews,
+  deleteNews,
+};
