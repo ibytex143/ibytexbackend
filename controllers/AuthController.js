@@ -8,7 +8,7 @@ const generateAccountId = async () => {
   return `#${random}`;
 };
 
-// SIGNUP
+// ================= SIGNUP =================
 const signup = async (req, res) => {
   try {
     const { name, email, password, phone, telegramId } = req.body;
@@ -20,10 +20,24 @@ const signup = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({ email });
+    // ✅ International phone validation
+    const phoneRegex = /^\+\d{8,15}$/;
+
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({
+        message: "Invalid phone number format",
+        success: false,
+      });
+    }
+
+    // ✅ Check existing email OR phone
+    const existingUser = await User.findOne({
+      $or: [{ email }, { phone }],
+    });
+
     if (existingUser) {
       return res.status(409).json({
-        message: "User already exists",
+        message: "Email or phone already registered",
         success: false,
       });
     }
@@ -35,7 +49,7 @@ const signup = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      phone,
+      phone, // ✅ Country code ke saath save hoga
       telegramId,
       accountId,
     });
@@ -52,7 +66,9 @@ const signup = async (req, res) => {
         accountId: user.accountId,
       },
     });
+
   } catch (error) {
+    console.error(error);
     res.status(500).json({
       message: "Signup failed",
       success: false,
@@ -60,13 +76,14 @@ const signup = async (req, res) => {
   }
 };
 
-// LOGIN
+// ================= LOGIN =================
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
     const errorMessage = "Invalid email or password";
+
+    const user = await User.findOne({ email });
 
     if (!user) {
       return res.status(403).json({
@@ -76,6 +93,7 @@ const login = async (req, res) => {
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
+
     if (!isPasswordValid) {
       return res.status(403).json({
         message: errorMessage,
@@ -100,7 +118,9 @@ const login = async (req, res) => {
         accountId: user.accountId,
       },
     });
+
   } catch (error) {
+    console.error(error);
     res.status(500).json({
       message: "Login failed",
       success: false,
