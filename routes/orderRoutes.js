@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const { deleteOrder } = require("../controllers/orderController");
+const { getTodayStats } = require("../controllers/orderController");
+
 
 const upload = require("../middlewares/upload");
 const adminAuth = require("../middlewares/adminAuth");
@@ -31,6 +33,8 @@ router.put("/complete/:id", adminAuth, completeOrder);
 router.delete("/admin/:id", adminAuth, deleteOrder);
 router.get("/admin/dashboard-summary", adminAuth, getDashboardSummary);
 router.get("/admin/history", adminAuth, getHistoryByDate);
+router.get("/admin/today-stats", adminAuth, getTodayStats);
+
 
 
 module.exports = router;

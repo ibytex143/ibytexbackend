@@ -174,6 +174,45 @@ const getHistoryByDate = async (req, res) => {
     res.status(500).json({ message: "History fetch failed" });
   }
 };
+// ================= ADMIN DASHBOARD STATS =================
+const getTodayStats = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const orders = await Order.find({
+      createdAt: { $gte: today, $lt: tomorrow },
+      isDeletedByAdmin: false,
+    });
+
+    const totalUsdt = orders.reduce(
+      (sum, o) => sum + Number(o.usdtAmount || 0),
+      0
+    );
+
+    const pendingPayment = orders
+      .filter((o) => o.status === "PENDING")
+      .reduce((sum, o) => sum + Number(o.totalINR || 0), 0);
+
+    const successfulPayment = orders
+      .filter((o) => o.status === "COMPLETED")
+      .reduce((sum, o) => sum + Number(o.totalINR || 0), 0);
+
+    res.json({
+      totalUsdt,
+      pendingPayment,
+      successfulPayment,
+      totalOrders: orders.length,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Stats fetch failed" });
+  }
+};
+
 
 
 module.exports = {
@@ -184,4 +223,6 @@ module.exports = {
   deleteOrder,
   getDashboardSummary,
   getHistoryByDate,
+  getTodayStats,
+  
 };
