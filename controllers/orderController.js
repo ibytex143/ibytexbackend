@@ -101,10 +101,87 @@ const deleteOrder = async (req, res) => {
   }
 };
 
+// ================= ADMIN DASHBOARD SUMMARY =================
+const getDashboardSummary = async (req, res) => {
+  try {
+    const orders = await Order.find({ isDeletedByAdmin: false });
+
+    const totalUsdtReceived = orders.reduce(
+      (sum, o) => sum + (o.usdtAmount || 0),
+      0
+    );
+
+    const totalPendingInr = orders
+      .filter((o) => o.status === "PENDING")
+      .reduce((sum, o) => sum + (o.totalINR || 0), 0);
+
+    const totalSuccessfulInr = orders
+      .filter((o) => o.status === "COMPLETED")
+      .reduce((sum, o) => sum + (o.totalINR || 0), 0);
+
+    const totalOrders = orders.length;
+
+    res.json({
+      totalUsdtReceived,
+      totalPendingInr,
+      totalSuccessfulInr,
+      totalOrders,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Dashboard summary failed" });
+  }
+};
+
+// ================= ADMIN HISTORY BY DATE =================
+const getHistoryByDate = async (req, res) => {
+  try {
+    const { date } = req.query;
+
+    if (!date) {
+      return res.status(400).json({ message: "Date required" });
+    }
+
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
+
+    const orders = await Order.find({
+      createdAt: { $gte: start, $lte: end },
+      isDeletedByAdmin: false,
+    })
+      .populate("userId", "name email phone accountId telegramId")
+      .sort({ createdAt: -1 });
+
+    const totalUsdt = orders.reduce(
+      (sum, o) => sum + (o.usdtAmount || 0),
+      0
+    );
+
+    const totalInrPaid = orders
+      .filter((o) => o.status === "COMPLETED")
+      .reduce((sum, o) => sum + (o.totalINR || 0), 0);
+
+    res.json({
+      totalUsdt,
+      totalInrPaid,
+      orders,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "History fetch failed" });
+  }
+};
+
+
 module.exports = {
   createOrder,
   getMyOrders,
   getAllOrders,
   completeOrder,
   deleteOrder,
+  getDashboardSummary,
+  getHistoryByDate,
 };

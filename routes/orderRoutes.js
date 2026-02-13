@@ -11,6 +11,8 @@ const {
   getMyOrders,
   getAllOrders,
   completeOrder,
+  getDashboardSummary,
+  getHistoryByDate,
 } = require("../controllers/orderController");
 
 // USER
@@ -27,5 +29,8 @@ router.get("/my", userAuth, getMyOrders);
 router.get("/admin", adminAuth, getAllOrders);
 router.put("/complete/:id", adminAuth, completeOrder);
 router.delete("/admin/:id", adminAuth, deleteOrder);
+router.get("/admin/dashboard-summary", adminAuth, getDashboardSummary);
+router.get("/admin/history", adminAuth, getHistoryByDate);
+
 
 module.exports = router;
