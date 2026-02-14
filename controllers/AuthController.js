@@ -81,15 +81,21 @@ const sendOtp = async (req, res) => {
   try {
     const { email } = req.body;
 
- let user = await User.findOne({ email });
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
 
-if (!user) {
-  return res.status(400).json({
-    success: false,
-    message: "Please fill signup details first",
-  });
-}
+    let user = await User.findOne({ email });
 
+    if (!user) {
+      user = new User({
+        email,
+        isEmailVerified: false,
+      });
+    }
 
     if (user.isEmailVerified) {
       return res.status(400).json({
@@ -101,10 +107,11 @@ if (!user) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     user.otp = otp;
-    user.otpExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes
+    user.otpExpiry = Date.now() + 5 * 60 * 1000;
     user.otpAttempts = 0;
 
     await user.save();
+
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
