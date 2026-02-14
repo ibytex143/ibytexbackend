@@ -88,12 +88,16 @@ const sendOtp = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    let user = await User.findOne({ email });
 
+    // 🔥 If user not exist → create temporary user
     if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "User not found. Please signup first.",
+      user = new User({
+        email,
+        name: "temp",
+        password: "temp",
+        phone: "+0000000000",
+        isEmailVerified: false,
       });
     }
 
@@ -114,8 +118,8 @@ const sendOtp = async (req, res) => {
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT), // 🔥 IMPORTANT
-      secure: process.env.SMTP_PORT == 465, // 🔥 IMPORTANT
+      port: process.env.SMTP_PORT,
+      secure: false,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
@@ -126,11 +130,7 @@ const sendOtp = async (req, res) => {
       from: `"Ibytex" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "Your OTP Code",
-      html: `
-        <h2>Email Verification</h2>
-        <h1>${otp}</h1>
-        <p>This OTP will expire in 5 minutes.</p>
-      `,
+      html: `<h1>${otp}</h1>`,
     });
 
     res.json({
@@ -146,6 +146,7 @@ const sendOtp = async (req, res) => {
     });
   }
 };
+
 
 
 // ================= VERIFY OTP =================
