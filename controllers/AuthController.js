@@ -115,6 +115,10 @@ const sendOtp = async (req, res) => {
     user.otpAttempts = 0;
 
     await user.save();
+    
+    await transporter.verify();
+console.log("SMTP ready");
+
 
  const transporter = nodemailer.createTransport({
   service: "gmail",
