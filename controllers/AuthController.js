@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
+const axios = require("axios");
 
 // ================= GENERATE ACCOUNT ID =================
 const generateAccountId = async () => {
@@ -107,30 +107,28 @@ const sendOtp = async (req, res) => {
 
     await user.save();
 
-    // ✅ CREATE TRANSPORTER FIRST
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
-
-
-    // ✅ THEN SEND MAIL
-    await transporter.sendMail({
-      from: `"Ibytex" <${process.env.SMTP_USER}>`,
-      to: email,
-      subject: "Your OTP Code",
-      html: `
-        <h2>Email Verification</h2>
-        <p>Your OTP is:</p>
-        <h1>${otp}</h1>
-        <p>This OTP will expire in 5 minutes.</p>
-      `,
-    });
+    await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        sender: {
+          name: "Ibytex",
+          email: "your_verified_email_here"
+        },
+        to: [{ email }],
+        subject: "Your OTP Code",
+        htmlContent: `
+          <h2>Email Verification</h2>
+          <h1>${otp}</h1>
+          <p>This OTP will expire in 5 minutes.</p>
+        `
+      },
+      {
+        headers: {
+          "api-key": process.env.BREVO_API_KEY,
+          "Content-Type": "application/json"
+        }
+      }
+    );
 
     return res.json({
       success: true,
@@ -138,7 +136,7 @@ const transporter = nodemailer.createTransport({
     });
 
   } catch (err) {
-    console.error("OTP ERROR:", err);
+    console.error("OTP ERROR:", err.response?.data || err.message);
     return res.status(500).json({
       success: false,
       message: "Failed to send OTP",
