@@ -88,12 +88,12 @@ const sendOtp = async (req, res) => {
       });
     }
 
-    let user = await User.findOne({ email });
+    const user = await User.findOne({ email });
 
     if (!user) {
-      user = new User({
-        email,
-        isEmailVerified: false,
+      return res.status(400).json({
+        success: false,
+        message: "User not found. Please signup first.",
       });
     }
 
@@ -112,11 +112,10 @@ const sendOtp = async (req, res) => {
 
     await user.save();
 
-
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      secure: false,
+      port: Number(process.env.SMTP_PORT), // 🔥 IMPORTANT
+      secure: process.env.SMTP_PORT == 465, // 🔥 IMPORTANT
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
@@ -129,7 +128,6 @@ const sendOtp = async (req, res) => {
       subject: "Your OTP Code",
       html: `
         <h2>Email Verification</h2>
-        <p>Your OTP is:</p>
         <h1>${otp}</h1>
         <p>This OTP will expire in 5 minutes.</p>
       `,
@@ -141,13 +139,14 @@ const sendOtp = async (req, res) => {
     });
 
   } catch (err) {
-    console.log(err);
+    console.log("OTP ERROR:", err);
     res.status(500).json({
       success: false,
       message: "Failed to send OTP",
     });
   }
 };
+
 
 // ================= VERIFY OTP =================
 const verifyOtp = async (req, res) => {
