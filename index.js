@@ -20,7 +20,7 @@ app.use(cors({
 }));
 
 app.use("/uploads", express.static("uploads"));
-app.use('/auth', AuthRouter);
+app.use('/api/auth', AuthRouter);
 app.use('/products', ProductRouter);
 app.use("/admin", AdminRoutes);
 app.use("/orders", require("./routes/orderRoutes"));
