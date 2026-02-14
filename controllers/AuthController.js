@@ -11,6 +11,7 @@ const generateAccountId = async () => {
 };
 
 // ================= SIGNUP =================
+// ================= SIGNUP =================
 const signup = async (req, res) => {
   try {
     const { name, email, password, phone, telegramId } = req.body;
@@ -31,12 +32,13 @@ const signup = async (req, res) => {
     }
 
     const existingUser = await User.findOne({
-      $or: [{ email }, { phone }],
+      $or: [{ email }],
     });
 
-    if (existingUser) {
+    // ❌ If already verified user → block
+    if (existingUser && existingUser.isEmailVerified) {
       return res.status(409).json({
-        message: "Email or phone already registered",
+        message: "Email already registered",
         success: false,
       });
     }
@@ -44,15 +46,30 @@ const signup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const accountId = await generateAccountId();
 
-    const user = new User({
-      name,
-      email,
-      password: hashedPassword,
-      phone,
-      telegramId,
-      accountId,
-      isEmailVerified: false,
-    });
+    let user;
+
+    // 🔁 If user exists but NOT verified → overwrite
+    if (existingUser) {
+      user = existingUser;
+      user.name = name;
+      user.password = hashedPassword;
+      user.phone = phone;
+      user.telegramId = telegramId;
+      user.accountId = accountId;
+      user.isEmailVerified = true;
+    } 
+    // 🆕 If completely new user
+    else {
+      user = new User({
+        name,
+        email,
+        password: hashedPassword,
+        phone,
+        telegramId,
+        accountId,
+        isEmailVerified: true,
+      });
+    }
 
     await user.save();
 
@@ -75,6 +92,7 @@ const signup = async (req, res) => {
     });
   }
 };
+
 
 // ================= SEND OTP =================
 const sendOtp = async (req, res) => {
