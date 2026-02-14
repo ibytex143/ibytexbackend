@@ -112,7 +112,7 @@ const sendOtp = async (req, res) => {
       {
         sender: {
           name: "Ibytex",
-          email: "your_verified_email_here"
+          email: "noreplyibytex@gmail.com"
         },
         to: [{ email }],
         subject: "Your OTP Code",
