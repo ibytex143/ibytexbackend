@@ -116,15 +116,14 @@ const sendOtp = async (req, res) => {
 
     await user.save();
 
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      secure: true,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+ const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
+
 
     await transporter.sendMail({
       from: `"Ibytex" <${process.env.SMTP_USER}>`,
