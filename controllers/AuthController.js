@@ -16,6 +16,19 @@ const signup = async (req, res) => {
   try {
     const { name, email, password, phone, telegramId } = req.body;
 
+    // 🔒 Check if email verified
+if (
+  !global.otpStore ||
+  !global.otpStore[email] ||
+  !global.otpStore[email].verified
+) {
+  return res.status(400).json({
+    success: false,
+    message: "Please verify email first",
+  });
+}
+
+
     if (!name || !email || !password || !phone) {
       return res.status(400).json({
         message: "All required fields must be filled",
@@ -95,6 +108,7 @@ const signup = async (req, res) => {
 
 
 // ================= SEND OTP =================
+// ================= SEND OTP =================
 const sendOtp = async (req, res) => {
   try {
     const { email } = req.body;
@@ -106,24 +120,14 @@ const sendOtp = async (req, res) => {
       });
     }
 
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      user = new User({
-        name: "Temp",
-        email,
-        password: "temp123",
-        phone: "+10000000000",
-      });
-    }
-
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    user.otp = otp;
-    user.otpExpiry = Date.now() + 5 * 60 * 1000;
-    user.otpAttempts = 0;
-
-    await user.save();
+    // 🔐 Store OTP in memory (temporary store)
+    global.otpStore = global.otpStore || {};
+    global.otpStore[email] = {
+      otp,
+      expiry: Date.now() + 5 * 60 * 1000,
+    };
 
     await axios.post(
       "https://api.brevo.com/v3/smtp/email",
@@ -165,62 +169,52 @@ const sendOtp = async (req, res) => {
 
 
 
+
+// ================= VERIFY OTP =================
 // ================= VERIFY OTP =================
 const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
 
-    const user = await User.findOne({ email });
-
-    if (!user) {
+    if (!global.otpStore || !global.otpStore[email]) {
       return res.status(400).json({
         success: false,
-        message: "Invalid request",
+        message: "OTP not requested",
       });
     }
 
-    if (user.otpAttempts >= 5) {
-      return res.status(429).json({
-        success: false,
-        message: "Too many attempts. Try later.",
-      });
-    }
+    const stored = global.otpStore[email];
 
-    if (user.otp !== otp) {
-      user.otpAttempts += 1;
-      await user.save();
-      return res.status(400).json({
-        success: false,
-        message: "Invalid OTP",
-      });
-    }
-
-    if (Date.now() > user.otpExpiry) {
+    if (Date.now() > stored.expiry) {
       return res.status(400).json({
         success: false,
         message: "OTP expired",
       });
     }
 
-    user.isEmailVerified = true;
-    user.otp = null;
-    user.otpExpiry = null;
-    user.otpAttempts = 0;
+    if (stored.otp !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP",
+      });
+    }
 
-    await user.save();
+    // ✅ Mark email verified in memory
+    global.otpStore[email].verified = true;
 
-    res.json({
+    return res.json({
       success: true,
       message: "Email verified successfully",
     });
 
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Verification failed",
     });
   }
 };
+
 
 // ================= LOGIN =================
 const login = async (req, res) => {
