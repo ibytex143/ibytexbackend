@@ -90,21 +90,12 @@ const sendOtp = async (req, res) => {
 
     let user = await User.findOne({ email });
 
-    // 🔥 If user not exist → create temporary user
     if (!user) {
       user = new User({
+        name: "Temp",
         email,
-        name: "temp",
-        password: "temp",
-        phone: "+0000000000",
-        isEmailVerified: false,
-      });
-    }
-
-    if (user.isEmailVerified) {
-      return res.status(400).json({
-        success: false,
-        message: "Email already verified",
+        password: "temp123",
+        phone: "+10000000000",
       });
     }
 
@@ -115,40 +106,45 @@ const sendOtp = async (req, res) => {
     user.otpAttempts = 0;
 
     await user.save();
-    
-    await transporter.verify();
-console.log("SMTP ready");
 
+    // ✅ CREATE TRANSPORTER FIRST
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT),
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
 
- const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
-
-
+    // ✅ THEN SEND MAIL
     await transporter.sendMail({
       from: `"Ibytex" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "Your OTP Code",
-      html: `<h1>${otp}</h1>`,
+      html: `
+        <h2>Email Verification</h2>
+        <p>Your OTP is:</p>
+        <h1>${otp}</h1>
+        <p>This OTP will expire in 5 minutes.</p>
+      `,
     });
 
-    res.json({
+    return res.json({
       success: true,
       message: "OTP sent successfully",
     });
 
   } catch (err) {
-    console.log("OTP ERROR:", err);
-    res.status(500).json({
+    console.error("OTP ERROR:", err);
+    return res.status(500).json({
       success: false,
       message: "Failed to send OTP",
     });
   }
 };
+
 
 
 
