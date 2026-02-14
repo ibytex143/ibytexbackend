@@ -24,7 +24,7 @@ app.use('/auth', AuthRouter);
 app.use('/products', ProductRouter);
 app.use("/admin", AdminRoutes);
 app.use("/orders", require("./routes/orderRoutes"));
-const authRoutes = require("./routes/authRoutes");
+const authRoutes = require("./routes/AuthRoutes");
 
 app.get('/ping', (req, res) => {
     res.send('pong');
