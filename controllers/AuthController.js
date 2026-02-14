@@ -2,9 +2,9 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const crypto = require("crypto");
-const sendEmail = require("../utils/sendEmail");
+const nodemailer = require("nodemailer");
 
-// Generate Unique Account ID
+// ================= GENERATE ACCOUNT ID =================
 const generateAccountId = async () => {
   const random = Math.floor(10000 + Math.random() * 90000);
   return `#${random}`;
@@ -22,10 +22,7 @@ const signup = async (req, res) => {
       });
     }
 
-    // ✅ INTERNATIONAL PHONE VALIDATION
-    // Accepts +85288797979, +918349742527, +12025550123 etc
     const phoneRegex = /^\+\d{8,15}$/;
-
     if (!phoneRegex.test(phone)) {
       return res.status(400).json({
         message: "Phone number must include country code (example: +91)",
@@ -33,7 +30,6 @@ const signup = async (req, res) => {
       });
     }
 
-    // ✅ Check existing email OR phone
     const existingUser = await User.findOne({
       $or: [{ email }, { phone }],
     });
@@ -52,9 +48,10 @@ const signup = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      phone, // full international number saved
+      phone,
       telegramId,
       accountId,
+      isEmailVerified: false,
     });
 
     await user.save();
@@ -79,67 +76,107 @@ const signup = async (req, res) => {
   }
 };
 
-
 // ================= SEND OTP =================
-exports.sendOtp = async (req, res) => {
+const sendOtp = async (req, res) => {
   try {
     const { email } = req.body;
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser && existingUser.isEmailVerified) {
-      return res.status(400).json({ message: "Email already registered" });
-    }
+ let user = await User.findOne({ email });
 
-    const otp = crypto.randomInt(100000, 999999).toString();
+if (!user) {
+  return res.status(400).json({
+    success: false,
+    message: "Please fill signup details first",
+  });
+}
 
-    const otpExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes
 
-    let user = existingUser;
-
-    if (!user) {
-      user = await User.create({
-        email,
-        otp,
-        otpExpiry,
+    if (user.isEmailVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already verified",
       });
-    } else {
-      user.otp = otp;
-      user.otpExpiry = otpExpiry;
-      user.otpAttempts = 0;
-      await user.save();
     }
 
-    await sendEmail(email, otp);
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    res.json({ success: true, message: "OTP sent to email" });
+    user.otp = otp;
+    user.otpExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes
+    user.otpAttempts = 0;
+
+    await user.save();
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"Ibytex" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: "Your OTP Code",
+      html: `
+        <h2>Email Verification</h2>
+        <p>Your OTP is:</p>
+        <h1>${otp}</h1>
+        <p>This OTP will expire in 5 minutes.</p>
+      `,
+    });
+
+    res.json({
+      success: true,
+      message: "OTP sent successfully",
+    });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "OTP send failed" });
+    console.log(err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to send OTP",
+    });
   }
 };
 
 // ================= VERIFY OTP =================
-exports.verifyOtp = async (req, res) => {
+const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
 
     const user = await User.findOne({ email });
 
-    if (!user) return res.status(400).json({ message: "Invalid request" });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid request",
+      });
+    }
 
     if (user.otpAttempts >= 5) {
-      return res.status(429).json({ message: "Too many attempts. Try later." });
+      return res.status(429).json({
+        success: false,
+        message: "Too many attempts. Try later.",
+      });
     }
 
     if (user.otp !== otp) {
       user.otpAttempts += 1;
       await user.save();
-      return res.status(400).json({ message: "Invalid OTP" });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP",
+      });
     }
 
     if (Date.now() > user.otpExpiry) {
-      return res.status(400).json({ message: "OTP expired" });
+      return res.status(400).json({
+        success: false,
+        message: "OTP expired",
+      });
     }
 
     user.isEmailVerified = true;
@@ -149,10 +186,16 @@ exports.verifyOtp = async (req, res) => {
 
     await user.save();
 
-    res.json({ success: true, message: "Email verified" });
+    res.json({
+      success: true,
+      message: "Email verified successfully",
+    });
 
   } catch (err) {
-    res.status(500).json({ message: "Verification failed" });
+    res.status(500).json({
+      success: false,
+      message: "Verification failed",
+    });
   }
 };
 
@@ -211,4 +254,6 @@ const login = async (req, res) => {
 module.exports = {
   signup,
   login,
+  sendOtp,
+  verifyOtp,
 };
