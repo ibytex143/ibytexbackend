@@ -24,6 +24,17 @@ isBlocked: {
   type: Boolean,
   default: false,
 },
+otp: String,
+otpExpiry: Date,
+isEmailVerified: {
+  type: Boolean,
+  default: false,
+},
+otpAttempts: {
+  type: Number,
+  default: 0,
+},
+
 
     // ✅ OPTIONAL
     telegramId: {

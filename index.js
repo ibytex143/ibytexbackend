@@ -24,6 +24,7 @@ app.use('/auth', AuthRouter);
 app.use('/products', ProductRouter);
 app.use("/admin", AdminRoutes);
 app.use("/orders", require("./routes/orderRoutes"));
+const authRoutes = require("./routes/authRoutes");
 
 app.get('/ping', (req, res) => {
     res.send('pong');
@@ -47,6 +48,7 @@ io.on("connection", (socket) => {
     console.log("User disconnected");
   });
 });
+app.use("/api/auth", authRoutes);
 
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

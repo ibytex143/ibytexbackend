@@ -1,6 +1,8 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const crypto = require("crypto");
+const sendEmail = require("../utils/sendEmail");
 
 // Generate Unique Account ID
 const generateAccountId = async () => {
@@ -74,6 +76,83 @@ const signup = async (req, res) => {
       message: "Signup failed",
       success: false,
     });
+  }
+};
+
+
+// ================= SEND OTP =================
+exports.sendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser && existingUser.isEmailVerified) {
+      return res.status(400).json({ message: "Email already registered" });
+    }
+
+    const otp = crypto.randomInt(100000, 999999).toString();
+
+    const otpExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes
+
+    let user = existingUser;
+
+    if (!user) {
+      user = await User.create({
+        email,
+        otp,
+        otpExpiry,
+      });
+    } else {
+      user.otp = otp;
+      user.otpExpiry = otpExpiry;
+      user.otpAttempts = 0;
+      await user.save();
+    }
+
+    await sendEmail(email, otp);
+
+    res.json({ success: true, message: "OTP sent to email" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "OTP send failed" });
+  }
+};
+
+// ================= VERIFY OTP =================
+exports.verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) return res.status(400).json({ message: "Invalid request" });
+
+    if (user.otpAttempts >= 5) {
+      return res.status(429).json({ message: "Too many attempts. Try later." });
+    }
+
+    if (user.otp !== otp) {
+      user.otpAttempts += 1;
+      await user.save();
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    if (Date.now() > user.otpExpiry) {
+      return res.status(400).json({ message: "OTP expired" });
+    }
+
+    user.isEmailVerified = true;
+    user.otp = null;
+    user.otpExpiry = null;
+    user.otpAttempts = 0;
+
+    await user.save();
+
+    res.json({ success: true, message: "Email verified" });
+
+  } catch (err) {
+    res.status(500).json({ message: "Verification failed" });
   }
 };
 
