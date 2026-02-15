@@ -279,7 +279,7 @@ const verifyResetOtp = async (req, res) => {
 
 
 // ================= RESET PASSWORD =================
-c// ================= RESET PASSWORD =================
+// ================= RESET PASSWORD =================
 const resetPassword = async (req, res) => {
   try {
     const { email, newPassword } = req.body;
