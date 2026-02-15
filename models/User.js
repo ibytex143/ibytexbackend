@@ -35,6 +35,12 @@ otpAttempts: {
   default: 0,
 },
 
+otpVerified: {
+  type: Boolean,
+  default: false,
+},
+
+
 
     // ✅ OPTIONAL
     telegramId: {
