@@ -167,9 +167,17 @@ const sendOtp = async (req, res) => {
 };
 
 // ================= FORGOT PASSWORD - SEND OTP =================
+// ================= FORGOT PASSWORD - SEND OTP =================
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
 
     const user = await User.findOne({ email });
     if (!user) {
@@ -182,37 +190,48 @@ const forgotPassword = async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     user.otp = otp;
-    user.otpExpiry = Date.now() + 5 * 60 * 1000; // 5 min
+    user.otpExpiry = Date.now() + 5 * 60 * 1000;
     await user.save();
 
-    await axios.post(
-      "https://api.brevo.com/v3/smtp/email",
-      {
-        sender: { name: "Ibytex", email: "noreplyibytex@gmail.com" },
-        to: [{ email }],
-        subject: "Reset Password OTP",
-        htmlContent: `
-          <h2>Password Reset OTP</h2>
-          <h1>${otp}</h1>
-          <p>This OTP will expire in 5 minutes.</p>
-        `,
-      },
-      {
-        headers: {
-          "api-key": process.env.BREVO_API_KEY,
-          "Content-Type": "application/json",
+    // ✅ Email send try-catch separate
+    try {
+      await axios.post(
+        "https://api.brevo.com/v3/smtp/email",
+        {
+          sender: {
+            name: "Ibytex",
+            email: "noreplyibytex@gmail.com"
+          },
+          to: [{ email }],
+          subject: "Reset Password OTP",
+          htmlContent: `
+            <h2>Password Reset OTP</h2>
+            <h1>${otp}</h1>
+            <p>This OTP will expire in 5 minutes.</p>
+          `
         },
-      }
-    );
+        {
+          headers: {
+            "api-key": process.env.BREVO_API_KEY,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+    } catch (emailError) {
+      console.log("Brevo Email Error:", emailError.response?.data || emailError.message);
+      // ⚠️ Email fail hone par bhi OTP save ho chuka hai
+    }
 
-    res.json({
+    return res.json({
       success: true,
       message: "Reset OTP sent successfully",
     });
+
   } catch (err) {
-    res.status(500).json({
+    console.error("Forgot Password Error:", err);
+    return res.status(500).json({
       success: false,
-      message: "Failed to send reset OTP",
+      message: "Server error",
     });
   }
 };
@@ -260,11 +279,29 @@ const verifyResetOtp = async (req, res) => {
 
 
 // ================= RESET PASSWORD =================
+c// ================= RESET PASSWORD =================
 const resetPassword = async (req, res) => {
   try {
     const { email, newPassword } = req.body;
 
+    // ✅ Check required fields
+    if (!email || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and new password are required",
+      });
+    }
+
+    // ✅ Password length validation
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
+
     const user = await User.findOne({ email });
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -272,25 +309,31 @@ const resetPassword = async (req, res) => {
       });
     }
 
+    // ✅ Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     user.password = hashedPassword;
+
+    // ✅ Clear OTP after successful reset
     user.otp = undefined;
     user.otpExpiry = undefined;
 
     await user.save();
 
-    res.json({
+    return res.json({
       success: true,
       message: "Password reset successful",
     });
-  } catch {
-    res.status(500).json({
+
+  } catch (error) {
+    console.error("Reset Password Error:", error);
+    return res.status(500).json({
       success: false,
       message: "Password reset failed",
     });
   }
 };
+
 
 
 
