@@ -166,6 +166,131 @@ const sendOtp = async (req, res) => {
   }
 };
 
+// ================= FORGOT PASSWORD - SEND OTP =================
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Email not registered",
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    user.otp = otp;
+    user.otpExpiry = Date.now() + 5 * 60 * 1000; // 5 min
+    await user.save();
+
+    await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        sender: { name: "Ibytex", email: "noreplyibytex@gmail.com" },
+        to: [{ email }],
+        subject: "Reset Password OTP",
+        htmlContent: `
+          <h2>Password Reset OTP</h2>
+          <h1>${otp}</h1>
+          <p>This OTP will expire in 5 minutes.</p>
+        `,
+      },
+      {
+        headers: {
+          "api-key": process.env.BREVO_API_KEY,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    res.json({
+      success: true,
+      message: "Reset OTP sent successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to send reset OTP",
+    });
+  }
+};
+
+
+// ================= VERIFY RESET OTP =================
+const verifyResetOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user || !user.otp) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP not requested",
+      });
+    }
+
+    if (Date.now() > user.otpExpiry) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP expired",
+      });
+    }
+
+    if (user.otp !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "OTP verified successfully",
+    });
+  } catch {
+    res.status(500).json({
+      success: false,
+      message: "OTP verification failed",
+    });
+  }
+};
+  
+
+
+// ================= RESET PASSWORD =================
+const resetPassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+    user.otp = undefined;
+    user.otpExpiry = undefined;
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Password reset successful",
+    });
+  } catch {
+    res.status(500).json({
+      success: false,
+      message: "Password reset failed",
+    });
+  }
+};
 
 
 
@@ -273,4 +398,8 @@ module.exports = {
   login,
   sendOtp,
   verifyOtp,
+  forgotPassword,
+  verifyResetOtp,
+  resetPassword
 };
+
