@@ -2,8 +2,8 @@ const express = require("express");
 const router = express.Router();
 const Withdrawal = require("../models/Withdrawal");
 const Order = require("../models/Order");
-const authMiddleware = require("../middleware/authMiddleware");
-const adminMiddleware = require("../middleware/adminMiddleware");
+const authMiddleware = require("../middlewares/auth");
+const adminMiddleware = require("../middlewares/adminAuth");
 
 
 // ================= USER CREATE WITHDRAW REQUEST =================
