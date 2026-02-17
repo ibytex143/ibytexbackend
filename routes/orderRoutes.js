@@ -25,6 +25,53 @@ router.post(
   createOrder
 );
 
+// ================= USER DASHBOARD STATS =================
+router.get("/user/stats", auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Today Completed USDT
+    const todayOrders = await Order.find({
+      userId,
+      status: "COMPLETED",
+      createdAt: { $gte: today },
+    });
+
+    const todayUSDT = todayOrders.reduce(
+      (sum, o) => sum + o.usdtAmount,
+      0
+    );
+
+    // Total Completed USDT
+    const allOrders = await Order.find({
+      userId,
+      status: "COMPLETED",
+    });
+
+    const totalUSDT = allOrders.reduce(
+      (sum, o) => sum + o.usdtAmount,
+      0
+    );
+
+    // Recent 2 Orders
+    const recentOrders = await Order.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(2);
+
+    res.json({
+      todayUSDT,
+      totalUSDT,
+      recentOrders,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Stats failed" });
+  }
+});
+
+
 
 router.get("/my", userAuth, getMyOrders);
 

@@ -5,6 +5,7 @@ const cors = require('cors');
 const AuthRouter = require('./routes/AuthRouter');
 const ProductRouter = require('./routes/ProductRouter');
 const AdminRoutes = require("./routes/adminRoutes");
+const withdrawalRoutes = require("./routes/withdrawalRoutes");
 require('dotenv').config();
 require('./models/db');
 
@@ -26,6 +27,7 @@ app.use('/products', ProductRouter);
 app.use("/admin", AdminRoutes);
 app.use("/orders", require("./routes/orderRoutes"));
 app.use("/api/payout", require("./routes/payoutRoutes"));
+app.use("/api/withdrawal", withdrawalRoutes);
 
 
 
