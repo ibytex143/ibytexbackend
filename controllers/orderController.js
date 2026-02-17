@@ -25,17 +25,19 @@ const createOrder = async (req, res) => {
 
 // ================= USER → GET MY ORDERS =================
 const getMyOrders = async (req, res) => {
-  const orders = await Order.find({ userId: req.user.id }).sort({
-    createdAt: -1,
-  });
+  const orders = await Order.find({ userId: req.user.id })
+    .populate("payoutMethodId")  // 🔥 ADD THIS
+    .sort({ createdAt: -1 });
 
   res.json(orders);
 };
+
 
 // ================= ADMIN → GET ALL ORDERS =================
 const getAllOrders = async (req, res) => {
   const orders = await Order.find({ isDeletedByAdmin: false })
     .populate("userId", "name email accountId phone telegramId")
+    .populate("payoutMethodId")
     .sort({ createdAt: -1 });
 
   res.json(orders);
