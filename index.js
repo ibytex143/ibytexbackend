@@ -17,6 +17,7 @@ app.use(bodyParser.json());
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true,
 }));
 
 app.use("/uploads", express.static("uploads"));
@@ -24,6 +25,8 @@ app.use('/api/auth', AuthRouter);
 app.use('/products', ProductRouter);
 app.use("/admin", AdminRoutes);
 app.use("/orders", require("./routes/orderRoutes"));
+app.use("/api/payout", require("./routes/payoutRoutes"));
+
 
 
 app.get('/ping', (req, res) => {
