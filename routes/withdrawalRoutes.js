@@ -64,12 +64,20 @@ router.get("/my", authMiddleware, async (req, res) => {
 
 // ================= ADMIN GET ALL WITHDRAW REQUESTS =================
 router.get("/admin", adminMiddleware, async (req, res) => {
-  const withdrawals = await Withdrawal.find()
-    .populate("userId")
-    .sort({ createdAt: -1 });
+  try {
+    console.log("Admin user:", req.admin);
 
-  res.json(withdrawals);
+    const withdrawals = await Withdrawal.find()
+      .populate("userId")
+      .sort({ createdAt: -1 });
+
+    res.json(withdrawals);
+  } catch (err) {
+    console.log("WITHDRAW ADMIN ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
+
 
 
 // ================= ADMIN APPROVE =================
