@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Payout = require("../models/PayoutMethod");
-const auth = require("../middleware/auth");
+const auth = require("../middlewares/auth");
 
 // CREATE
 router.post("/", auth, async (req, res) => {
