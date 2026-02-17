@@ -20,7 +20,7 @@ const {
 // USER
 router.post(
   "/",
-  auth,
+  userAuth,
   upload.single("receipt"),
   createOrder
 );
