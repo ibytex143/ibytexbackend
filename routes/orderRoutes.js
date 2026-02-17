@@ -20,10 +20,11 @@ const {
 // USER
 router.post(
   "/",
-  userAuth,
-  upload.single("receipt"), 
+  auth,
+  upload.single("receipt"),
   createOrder
 );
+
 
 router.get("/my", userAuth, getMyOrders);
 

@@ -11,18 +11,13 @@ const orderSchema = new mongoose.Schema(
     rate: Number,
     totalINR: Number,
 
-    paymentMethod: {
-      type: String,
-      enum: ["UPI", "BANK"],
-    },
+ payoutMethodId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "PayoutMethod",
+  required: true,
+},
 
-    userPaymentDetails: {
-      upiId: String,
-      accountName: String,
-      accountNumber: String,
-      ifsc: String,
-      accountType: String,
-    },
+   
 
     // 🔥 STORE UTR HERE
     adminUtrNumber: {

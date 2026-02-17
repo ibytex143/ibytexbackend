@@ -3,33 +3,16 @@ const Order = require("../models/Order");
 // ================= USER → CREATE ORDER =================
 const createOrder = async (req, res) => {
   try {
-    const {
-      usdtAmount,
-      rate,
-      totalINR,
-      paymentMethod,
-      upiId,
-      accountName,
-      accountNumber,
-      ifsc,
-      accountType,
-    } = req.body;
-
-    const userPaymentDetails =
-      paymentMethod === "UPI"
-        ? { upiId }
-        : { accountName, accountNumber, ifsc, accountType };
+    const { usdtAmount, rate, totalINR, payoutMethodId } = req.body;
 
     const order = await Order.create({
-      userId: req.user.id,
+      userId: req.user._id,
       usdtAmount,
       rate,
       totalINR,
-      paymentMethod,
-      userPaymentDetails,
+      payoutMethodId,
       receiptUrl: req.file ? `/uploads/${req.file.filename}` : null,
       status: "PENDING",
-      isDeletedByAdmin: false,
     });
 
     res.json({ success: true, orderId: order._id });
@@ -38,6 +21,7 @@ const createOrder = async (req, res) => {
     res.status(500).json({ message: "Order creation failed" });
   }
 };
+
 
 // ================= USER → GET MY ORDERS =================
 const getMyOrders = async (req, res) => {
