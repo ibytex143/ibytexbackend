@@ -4,6 +4,8 @@ const Withdrawal = require("../models/Withdrawal");
 const Order = require("../models/Order");
 const authMiddleware = require("../middlewares/auth");
 const adminMiddleware = require("../middlewares/adminAuth");
+const User = require("../models/User");
+
 
 
 // ================= USER CREATE WITHDRAW REQUEST =================
