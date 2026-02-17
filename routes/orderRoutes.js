@@ -3,10 +3,10 @@ const router = express.Router();
 const { deleteOrder } = require("../controllers/orderController");
 const { getTodayStats } = require("../controllers/orderController");
 
-
 const upload = require("../middlewares/upload");
 const adminAuth = require("../middlewares/adminAuth");
 const userAuth = require("../middlewares/auth");
+const auth = require("../middlewares/auth");
 
 const {
   createOrder,
