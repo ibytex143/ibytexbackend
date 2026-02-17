@@ -13,6 +13,17 @@ const withdrawalSchema = new mongoose.Schema(
       required: true,
     },
 
+    paymentMethod: {
+      type: String,
+      enum: ["BANK", "UPI"],
+      required: true,
+    },
+
+    paymentDetails: {
+      type: Object, // store full bank/upi object
+      required: true,
+    },
+
     status: {
       type: String,
       enum: ["PENDING", "APPROVED", "REJECTED"],

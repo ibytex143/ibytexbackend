@@ -12,12 +12,16 @@ const adminMiddleware = require("../middlewares/adminAuth");
 // ================= USER CREATE WITHDRAW REQUEST =================
 router.post("/create", authMiddleware, async (req, res) => {
   try {
-    const { amount } = req.body;
+    const { amount, paymentMethod, paymentDetails } = req.body;
 
+    // 1️⃣ Basic validation
     if (!amount || amount <= 0)
       return res.status(400).json({ message: "Invalid amount" });
 
-    // Calculate user available balance (only completed orders)
+    if (!paymentMethod || !paymentDetails)
+      return res.status(400).json({ message: "Payment details required" });
+
+    // 2️⃣ Calculate total sold (COMPLETED orders only)
     const orders = await Order.find({
       userId: req.user.id,
       status: "COMPLETED",
@@ -28,31 +32,38 @@ router.post("/create", authMiddleware, async (req, res) => {
       0
     );
 
+    // 3️⃣ Calculate already approved withdrawals
     const approvedWithdrawals = await Withdrawal.find({
       userId: req.user.id,
       status: "APPROVED",
     });
 
     const totalWithdrawn = approvedWithdrawals.reduce(
-      (acc, curr) => acc + curr.amount,
+      (acc, curr) => acc + Number(curr.amount),
       0
     );
 
     const availableBalance = totalSold - totalWithdrawn;
 
-    if (amount > availableBalance)
+    // 4️⃣ Prevent over-withdraw
+    if (Number(amount) > availableBalance)
       return res.status(400).json({ message: "Insufficient balance" });
 
+    // 5️⃣ Create withdrawal with payment info
     const withdrawal = await Withdrawal.create({
       userId: req.user.id,
-      amount,
+      amount: Number(amount),
+      paymentMethod,
+      paymentDetails,
     });
 
     res.json(withdrawal);
   } catch (err) {
+    console.log("WITHDRAW CREATE ERROR:", err);
     res.status(500).json({ message: "Withdrawal failed" });
   }
 });
+
 
 
 // ================= USER GET MY WITHDRAWALS =================
@@ -70,9 +81,13 @@ router.get("/admin", adminMiddleware, async (req, res) => {
   try {
     console.log("Admin user:", req.admin);
 
-    const withdrawals = await Withdrawal.find()
-      .populate("userId")
-      .sort({ createdAt: -1 });
+   const withdrawals = await Withdrawal.find()
+  .populate({
+    path: "userId",
+    model: "User"
+  })
+  .sort({ createdAt: -1 });
+
 
     res.json(withdrawals);
   } catch (err) {
