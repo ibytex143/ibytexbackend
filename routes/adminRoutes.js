@@ -8,6 +8,7 @@ const {
   getAllUsers,
   toggleBlockUser,
   deleteUser,
+  getTodayActiveUsers
 } = require("../controllers/adminUserController");
 
 // ADMIN LOGIN
@@ -35,6 +36,11 @@ router.get(
   "/withdrawal/admin/today-stats",
   adminAuth,
   withdrawalController.getTodayWithdrawStats
+);
+router.get(
+  "/active-users/today",
+  adminAuth,
+  getTodayActiveUsers
 );
 
 
