@@ -22,28 +22,31 @@ router.post("/create", authMiddleware, async (req, res) => {
       return res.status(400).json({ message: "Payment details required" });
 
     // 2️⃣ Calculate total sold (COMPLETED orders only)
-    const orders = await Order.find({
-      userId: req.user.id,
-      status: "COMPLETED",
-    });
+ // 2️⃣ Calculate total sold (COMPLETED orders only)
+const orders = await Order.find({
+  userId: req.user.id,
+  status: "COMPLETED",
+});
 
-    const totalSold = orders.reduce(
-      (acc, curr) => acc + Number(curr.usdtAmount),
-      0
-    );
+const totalSold = orders.reduce(
+  (acc, curr) =>
+    acc + (Number(curr.usdtAmount || 0) * Number(curr.rate || 0)),
+  0
+);
 
-    // 3️⃣ Calculate already approved withdrawals
-    const approvedWithdrawals = await Withdrawal.find({
-      userId: req.user.id,
-      status: "APPROVED",
-    });
+// 3️⃣ Calculate already approved withdrawals
+const approvedWithdrawals = await Withdrawal.find({
+  userId: req.user.id,
+  status: "APPROVED",
+});
 
-    const totalWithdrawn = approvedWithdrawals.reduce(
-      (acc, curr) => acc + Number(curr.amount),
-      0
-    );
+const totalWithdrawn = approvedWithdrawals.reduce(
+  (acc, curr) => acc + Number(curr.amount),
+  0
+);
 
-    const availableBalance = totalSold - totalWithdrawn;
+const availableBalance = totalSold - totalWithdrawn;
+
 
     // 4️⃣ Prevent over-withdraw
     if (Number(amount) > availableBalance)
