@@ -33,7 +33,7 @@ router.delete("/users/:id", adminAuth, deleteUser);
 
 router.get(
   "/withdrawal/admin/today-stats",
-  adminAuthMiddleware,
+  adminAuth,
   withdrawalController.getTodayWithdrawStats
 );
 
