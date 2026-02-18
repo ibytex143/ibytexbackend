@@ -48,6 +48,7 @@ const totalWithdrawn = approvedWithdrawals.reduce(
 const availableBalance = totalSold - totalWithdrawn;
 
 
+
     // 4️⃣ Prevent over-withdraw
     if (Number(amount) > availableBalance)
       return res.status(400).json({ message: "Insufficient balance" });
@@ -119,5 +120,7 @@ router.put("/reject/:id", adminMiddleware, async (req, res) => {
 
   res.json({ message: "Rejected" });
 });
+
+ 
 
 module.exports = router;

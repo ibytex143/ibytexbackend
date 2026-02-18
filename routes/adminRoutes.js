@@ -3,6 +3,7 @@ const adminAuth = require("../middlewares/adminAuth");
 const { adminLogin } = require("../controllers/adminController");
 const { setRate, getRate } = require("../controllers/rateController");
 const { addNews, getNews, updateNews , deleteNews } = require("../controllers/newsController");
+const withdrawalController = require("../controllers/withdrawalController");
 const {
   getAllUsers,
   toggleBlockUser,
@@ -29,6 +30,13 @@ router.delete("/news/:id", adminAuth, deleteNews);
 router.get("/users", adminAuth, getAllUsers);
 router.put("/users/block/:id", adminAuth, toggleBlockUser);
 router.delete("/users/:id", adminAuth, deleteUser);
+
+router.get(
+  "/withdrawal/admin/today-stats",
+  adminAuthMiddleware,
+  withdrawalController.getTodayWithdrawStats
+);
+
 
 
 module.exports = router;
