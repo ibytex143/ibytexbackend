@@ -1,6 +1,7 @@
 const Withdrawal = require("../models/Withdrawal");
 
-exports.getTodayWithdrawStats = async (req, res) => {
+// ================= TODAY STATS =================
+const getTodayWithdrawStats = async (req, res) => {
   try {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
@@ -16,11 +17,11 @@ exports.getTodayWithdrawStats = async (req, res) => {
 
     const pendingWithdrawAmount = withdrawals
       .filter(w => w.status === "PENDING")
-      .reduce((sum, w) => sum + w.amount, 0);
+      .reduce((sum, w) => sum + Number(w.amount || 0), 0);
 
     const successfulWithdrawAmount = withdrawals
       .filter(w => w.status === "APPROVED")
-      .reduce((sum, w) => sum + w.amount, 0);
+      .reduce((sum, w) => sum + Number(w.amount || 0), 0);
 
     res.json({
       totalWithdrawOrders,
@@ -32,7 +33,7 @@ exports.getTodayWithdrawStats = async (req, res) => {
   }
 };
 
-// APPROVE WITHDRAWAL
+// ================= APPROVE =================
 const approveWithdrawal = async (req, res) => {
   try {
     const { utrNumber } = req.body;
@@ -55,7 +56,8 @@ const approveWithdrawal = async (req, res) => {
   }
 };
 
-
+// ✅ EXPORT BOTH FUNCTIONS PROPERLY
 module.exports = {
+  getTodayWithdrawStats,
   approveWithdrawal,
 };
