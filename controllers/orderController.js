@@ -45,25 +45,50 @@ const getAllOrders = async (req, res) => {
 
 // ================= ADMIN → COMPLETE ORDER =================
 const completeOrder = async (req, res) => {
-  const { utrNumber } = req.body;
+  try {
+    const { status, notes } = req.body;
 
-  if (!utrNumber) {
-    return res.status(400).json({ message: "UTR number required" });
+    if (!status) {
+      return res.status(400).json({ message: "Status required" });
+    }
+
+    if (!notes) {
+      return res.status(400).json({ message: "Notes required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // 🔥 STATUS LOGIC
+    if (status === "SUCCESS") {
+      order.status = "COMPLETED";
+    }
+
+    if (status === "PENDING") {
+      order.status = "PENDING";
+    }
+
+    if (status === "FAILED") {
+      order.status = "FAILED";
+    }
+
+    // 🔥 SAVE NOTES (instead of UTR)
+    order.adminNotes = notes;
+    order.updatedAt = new Date();
+
+    await order.save();
+
+    res.json({ message: "Order updated successfully" });
+
+  } catch (err) {
+    console.log("ORDER COMPLETE ERROR:", err);
+    res.status(500).json({ message: "Server error" });
   }
-
-  const order = await Order.findById(req.params.id);
-
-  if (!order) {
-    return res.status(404).json({ message: "Order not found" });
-  }
-
-  order.status = "COMPLETED";
-  order.adminUtrNumber = utrNumber;
-
-  await order.save();
-
-  res.json({ success: true });
 };
+
 
 // ================= ADMIN → DELETE ORDER =================
 const deleteOrder = async (req, res) => {
