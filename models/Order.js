@@ -26,6 +26,7 @@ const orderSchema = new mongoose.Schema(
     },
 
     receiptUrl: String,
+    
     isDeletedByAdmin: {
       type: Boolean,
       default: false,
