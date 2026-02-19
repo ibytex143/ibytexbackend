@@ -31,3 +31,31 @@ exports.getTodayWithdrawStats = async (req, res) => {
     res.status(500).json({ message: "Server Error" });
   }
 };
+
+// APPROVE WITHDRAWAL
+const approveWithdrawal = async (req, res) => {
+  try {
+    const { utrNumber } = req.body;
+
+    const withdrawal = await Withdrawal.findById(req.params.id);
+
+    if (!withdrawal) {
+      return res.status(404).json({ message: "Not found" });
+    }
+
+    withdrawal.status = "APPROVED";
+    withdrawal.adminUtrNumber = utrNumber;
+    withdrawal.approvedAt = new Date();
+
+    await withdrawal.save();
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ message: "Approve failed" });
+  }
+};
+
+
+module.exports = {
+  approveWithdrawal,
+};

@@ -111,6 +111,13 @@ router.put("/approve/:id", adminMiddleware, async (req, res) => {
   res.json({ message: "Approved" });
 });
 
+router.put(
+  "/approve/:id",
+  adminAuth,
+  withdrawalController.approveWithdrawal
+);
+
+
 
 // ================= ADMIN REJECT =================
 router.put("/reject/:id", adminMiddleware, async (req, res) => {
