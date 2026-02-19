@@ -11,11 +11,13 @@ const orderSchema = new mongoose.Schema(
     rate: Number,
     totalINR: Number,
 
-    payoutMethodId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "PayoutMethod",
-      required: true,
-    },
+   payoutMethodId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "PayoutMethod",
+  required: false,
+  default: null,
+},
+
 
     // 🔥 STORE UTR HERE
     adminUtrNumber: {

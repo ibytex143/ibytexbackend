@@ -3,17 +3,17 @@ const Order = require("../models/Order");
 // ================= USER → CREATE ORDER =================
 const createOrder = async (req, res) => {
   try {
-    const { usdtAmount, rate, totalINR, payoutMethodId } = req.body;
+   const { usdtAmount, rate, totalINR } = req.body;
 
-    const order = await Order.create({
-      userId: req.user._id,
-      usdtAmount,
-      rate,
-      totalINR,
-      payoutMethodId,
-      receiptUrl: req.file ? `/uploads/${req.file.filename}` : null,
-      status: "PENDING",
-    });
+const order = await Order.create({
+  userId: req.user._id,
+  usdtAmount,
+  rate,
+  totalINR,
+  receiptUrl: req.file ? `/uploads/${req.file.filename}` : null,
+  status: "PENDING",
+});
+
 
     res.json({ success: true, orderId: order._id });
   } catch (err) {
@@ -26,7 +26,7 @@ const createOrder = async (req, res) => {
 // ================= USER → GET MY ORDERS =================
 const getMyOrders = async (req, res) => {
   const orders = await Order.find({ userId: req.user.id })
-    .populate("payoutMethodId")  // 🔥 ADD THIS
+
     .sort({ createdAt: -1 });
 
   res.json(orders);
@@ -37,7 +37,7 @@ const getMyOrders = async (req, res) => {
 const getAllOrders = async (req, res) => {
   const orders = await Order.find({ isDeletedByAdmin: false })
     .populate("userId", "name email accountId phone telegramId")
-    .populate("payoutMethodId")
+   
     .sort({ createdAt: -1 });
 
   res.json(orders);
