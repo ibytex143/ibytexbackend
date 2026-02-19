@@ -5,6 +5,8 @@ const Order = require("../models/Order");
 const User = require("../models/User");
 const authMiddleware = require("../middlewares/auth");
 const adminMiddleware = require("../middlewares/adminAuth");
+const adminAuth = require("../middlewares/adminAuth");
+
 
 
 
@@ -104,18 +106,32 @@ router.get("/admin", adminMiddleware, async (req, res) => {
 
 // ================= ADMIN APPROVE =================
 router.put("/approve/:id", adminMiddleware, async (req, res) => {
-  await Withdrawal.findByIdAndUpdate(req.params.id, {
-    status: "APPROVED",
-  });
+  try {
+    const { utrNumber } = req.body;
 
-  res.json({ message: "Approved" });
+    if (!utrNumber) {
+      return res.status(400).json({ message: "UTR number required" });
+    }
+
+    const withdrawal = await Withdrawal.findById(req.params.id);
+
+    if (!withdrawal) {
+      return res.status(404).json({ message: "Withdrawal not found" });
+    }
+
+    withdrawal.status = "APPROVED";
+    withdrawal.adminUtrNumber = utrNumber;   // ✅ SAVE UTR
+    withdrawal.approvedAt = new Date();      // ✅ Save approve time
+
+    await withdrawal.save();
+
+    res.json({ success: true, message: "Withdrawal approved" });
+
+  } catch (err) {
+    console.error("APPROVE ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
-
-router.put(
-  "/approve/:id",
-  adminAuth,
-  withdrawalController.approveWithdrawal
-);
 
 
 

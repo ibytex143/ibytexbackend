@@ -29,9 +29,15 @@ const withdrawalSchema = new mongoose.Schema(
       enum: ["PENDING", "APPROVED", "REJECTED"],
       default: "PENDING",
     },
-    adminUtrNumber: {
-  type: String
+
+adminUtrNumber: {
+  type: String,
 },
+
+approvedAt: {
+  type: Date,
+},
+
 
   },
   { timestamps: true }
