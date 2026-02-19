@@ -44,6 +44,7 @@ const getAllOrders = async (req, res) => {
 };
 
 // ================= ADMIN → COMPLETE ORDER =================
+// ================= ADMIN → COMPLETE ORDER =================
 const completeOrder = async (req, res) => {
   try {
     const { status, notes } = req.body;
@@ -62,32 +63,33 @@ const completeOrder = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // 🔥 STATUS LOGIC
+    // ✅ FINAL STATUS LOGIC
     if (status === "SUCCESS") {
       order.status = "COMPLETED";
-    }
-
-    if (status === "PENDING") {
+    } 
+    else if (status === "PENDING") {
       order.status = "PENDING";
-    }
-
-    if (status === "FAILED") {
+    } 
+    else if (status === "FAILED") {
       order.status = "FAILED";
+    } 
+    else {
+      return res.status(400).json({ message: "Invalid status value" });
     }
 
-    // 🔥 SAVE NOTES (instead of UTR)
     order.adminNotes = notes;
     order.updatedAt = new Date();
 
     await order.save();
 
-    res.json({ message: "Order updated successfully" });
+    res.json({ success: true, message: "Order updated successfully" });
 
   } catch (err) {
     console.log("ORDER COMPLETE ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 
 // ================= ADMIN → DELETE ORDER =================
