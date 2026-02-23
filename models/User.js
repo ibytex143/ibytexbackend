@@ -40,6 +40,11 @@ otpVerified: {
   default: false,
 },
 
+role: {
+  type: String,
+  enum: ["USER", "ADMIN"],
+  default: "USER"
+},
 
 
     // ✅ OPTIONAL
