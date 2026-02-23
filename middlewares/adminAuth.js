@@ -1,34 +1,19 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/User");
 
-module.exports = async (req, res, next) => {
+module.exports = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "Unauthorized - No token" });
+    return res.status(401).json({ message: "Unauthorized" });
   }
 
   const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // 🔥 Fetch user from DB
-    const user = await User.findById(decoded.id);
-
-    if (!user) {
-      return res.status(401).json({ message: "User not found" });
-    }
-
-    // 🔥 ROLE CHECK (case safe)
-    if (user.role?.toUpperCase() !== "ADMIN") {
-      return res.status(403).json({ message: "Admin access required" });
-    }
-
-    req.admin = user;
+    req.admin = decoded;
     next();
-
   } catch (error) {
-    return res.status(401).json({ message: "Invalid or expired token" });
+    return res.status(401).json({ message: "Invalid token" });
   }
 };
