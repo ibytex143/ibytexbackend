@@ -11,7 +11,8 @@ const protect = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findById(decoded.id);
+    // ✅ FIX: use decoded._id (NOT decoded.id)
+    const user = await User.findById(decoded._id);
 
     if (!user) {
       return res.status(401).json({ message: "User not found" });
@@ -28,6 +29,7 @@ const protect = async (req, res, next) => {
     next();
 
   } catch (err) {
+    console.error("Auth Error:", err.message);
     res.status(401).json({ message: "Token failed" });
   }
 };
