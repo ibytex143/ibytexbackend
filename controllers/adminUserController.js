@@ -30,6 +30,16 @@ exports.getAllUsers = async (req, res) => {
           registrationDate: user.createdAt,
           totalUsdt,
           totalOrders: orders.length,
+          ipAddress: user.ipAddress,
+deviceInfo: user.deviceInfo,
+city: user.city,
+country: user.country,
+
+lastActive: user.lastActive,
+lastLoginIp: user.lastLoginIp,
+lastLoginDevice: user.lastLoginDevice,
+lastLoginCity: user.lastLoginCity,
+lastLoginCountry: user.lastLoginCountry,
         };
       })
     );
