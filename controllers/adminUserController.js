@@ -26,7 +26,7 @@ exports.getAllUsers = async (req, res) => {
           accountId: user.accountId,
           phone: user.phone,
           telegramId: user.telegramId,
-          isBlocked: user.isBlocked,
+          status: user.status, 
           registrationDate: user.createdAt,
           totalUsdt,
           totalOrders: orders.length,
@@ -41,15 +41,29 @@ exports.getAllUsers = async (req, res) => {
 };
 
 // ================= BLOCK / UNBLOCK =================
+// ================= BLOCK / UNBLOCK =================
 exports.toggleBlockUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
 
-    user.isBlocked = !user.isBlocked;
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Toggle status properly
+    if (user.status === "Active") {
+      user.status = "Blocked";
+      user.isBlocked = true;
+    } else {
+      user.status = "Active";
+      user.isBlocked = false;
+    }
+
     await user.save();
 
     res.json({ message: "User status updated" });
-  } catch {
+
+  } catch (err) {
     res.status(500).json({ message: "Failed to update user" });
   }
 };
