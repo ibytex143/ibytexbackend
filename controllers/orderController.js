@@ -4,6 +4,12 @@ const Order = require("../models/Order");
 const createOrder = async (req, res) => {
   try {
    const { usdtAmount, rate, totalINR } = req.body;
+     
+           if (req.user.status === "Blocked") {
+  return res.status(403).json({
+    message: "Account blocked"
+  });
+}
 
 const order = await Order.create({
   userId: req.user._id,

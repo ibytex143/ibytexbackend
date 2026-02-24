@@ -23,6 +23,12 @@ router.post("/create", authMiddleware, async (req, res) => {
     if (!paymentMethod || !paymentDetails)
       return res.status(400).json({ message: "Payment details required" });
 
+    if (req.user.status === "Blocked") {
+  return res.status(403).json({
+    message: "Account blocked"
+  });
+}
+
     // 2️⃣ Calculate total sold (COMPLETED orders only)
  // 2️⃣ Calculate total sold (COMPLETED orders only)
 const orders = await Order.find({

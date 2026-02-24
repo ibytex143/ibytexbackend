@@ -413,6 +413,14 @@ const login = async (req, res) => {
       });
     }
 
+    // 🔥 BLOCK CHECK (MUST BE HERE)
+    if (user.status === "Blocked") {
+      return res.status(403).json({
+        message: "Your account is blocked by admin",
+        success: false,
+      });
+    }
+
     const jwtToken = jwt.sign(
       { email: user.email, _id: user._id },
       process.env.JWT_SECRET,

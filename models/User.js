@@ -13,6 +13,11 @@ const userSchema = new Schema(
       type: String,
       unique: true,
     },
+    status: {
+  type: String,
+  enum: ["Active", "Blocked"],
+  default: "Active"
+},
 
     // ✅ NEW FIELD (REQUIRED)
  phone: {
@@ -20,10 +25,7 @@ const userSchema = new Schema(
   required: true,
   unique: true,
 },
-isBlocked: {
-  type: Boolean,
-  default: false,
-},
+
 otp: String,
 otpExpiry: Date,
 isEmailVerified: {
