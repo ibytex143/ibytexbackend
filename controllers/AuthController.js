@@ -447,23 +447,21 @@ const ipRaw =
 
 const ip = ipRaw ? ipRaw.split(",")[0].trim() : "Unknown";
 
-    const parser = new UAParser(req.headers["user-agent"]);
-    const device = parser.getResult();
-    const deviceInfo = `${device.browser.name || "Unknown"} - ${device.os.name || "Unknown"}`;
+const parser = new UAParser(req.headers["user-agent"]);
+const device = parser.getResult();
+const deviceInfo = `${device.browser.name || "Unknown"} - ${device.os.name || "Unknown"}`;
 
-    let city = "Unknown";
-    let country = "Unknown";
+let city = "Unknown";
+let country = "Unknown";
 
-  try {
-  if (ip) {
-    const geo = geoip.lookup(ip);
-    if (geo) {
-      city = geo.city || "Unknown";
-      country = geo.country || "Unknown";
-    }
+try {
+  const geoRes = await axios.get(`http://ip-api.com/json/${ip}`);
+  if (geoRes.data.status === "success") {
+    city = geoRes.data.city || "Unknown";
+    country = geoRes.data.country || "Unknown";
   }
 } catch (err) {
-  console.log("GeoIP error:", err.message);
+  console.log("Geo API failed");
 }
 
 user.lastActive = new Date();
