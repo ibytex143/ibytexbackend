@@ -3,6 +3,9 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const crypto = require("crypto");
 const axios = require("axios");
+const requestIp = require("request-ip");
+const geoip = require("geoip-lite");
+const UAParser = require("ua-parser-js");
 
 // ================= GENERATE ACCOUNT ID =================
 const generateAccountId = async () => {
@@ -16,18 +19,16 @@ const signup = async (req, res) => {
   try {
     const { name, email, password, phone, telegramId } = req.body;
 
-    // 🔒 Check if email verified
-if (
-  !global.otpStore ||
-  !global.otpStore[email] ||
-  !global.otpStore[email].verified
-) {
-  return res.status(400).json({
-    success: false,
-    message: "Please verify email first",
-  });
-}
-
+    if (
+      !global.otpStore ||
+      !global.otpStore[email] ||
+      !global.otpStore[email].verified
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Please verify email first",
+      });
+    }
 
     if (!name || !email || !password || !phone) {
       return res.status(400).json({
@@ -36,19 +37,31 @@ if (
       });
     }
 
-    const phoneRegex = /^\+\d{8,15}$/;
-    if (!phoneRegex.test(phone)) {
-      return res.status(400).json({
-        message: "Phone number must include country code (example: +91)",
-        success: false,
-      });
+    // ✅ GET IP (Put this FIRST)
+    const ip =
+      req.headers["x-forwarded-for"]?.split(",")[0] ||
+      req.socket.remoteAddress ||
+      requestIp.getClientIp(req);
+
+    // ✅ GET DEVICE INFO
+    const parser = new UAParser(req.headers["user-agent"]);
+    const device = parser.getResult();
+    const deviceInfo = `${device.browser.name || "Unknown"} - ${device.os.name || "Unknown"}`;
+
+    // ✅ GET LOCATION
+    let city = "Unknown";
+    let country = "Unknown";
+
+    if (ip) {
+      const geo = geoip.lookup(ip);
+      if (geo) {
+        city = geo.city || "Unknown";
+        country = geo.country || "Unknown";
+      }
     }
 
-    const existingUser = await User.findOne({
-      $or: [{ email }],
-    });
+    const existingUser = await User.findOne({ email });
 
-    // ❌ If already verified user → block
     if (existingUser && existingUser.isEmailVerified) {
       return res.status(409).json({
         message: "Email already registered",
@@ -61,7 +74,6 @@ if (
 
     let user;
 
-    // 🔁 If user exists but NOT verified → overwrite
     if (existingUser) {
       user = existingUser;
       user.name = name;
@@ -70,9 +82,13 @@ if (
       user.telegramId = telegramId;
       user.accountId = accountId;
       user.isEmailVerified = true;
-    } 
-    // 🆕 If completely new user
-    else {
+
+      // ✅ UPDATE TRACKING INFO
+      user.ipAddress = ip;
+      user.deviceInfo = deviceInfo;
+      user.city = city;
+      user.country = country;
+    } else {
       user = new User({
         name,
         email,
@@ -81,31 +97,29 @@ if (
         telegramId,
         accountId,
         isEmailVerified: true,
+
+        ipAddress: ip,
+        deviceInfo: deviceInfo,
+        city,
+        country,
       });
     }
 
     await user.save();
 
     res.status(201).json({
-      message: "User created successfully",
       success: true,
-      user: {
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        accountId: user.accountId,
-      },
+      message: "User created successfully",
     });
 
   } catch (error) {
     console.error(error);
     res.status(500).json({
-      message: "Signup failed",
       success: false,
+      message: "Signup failed",
     });
   }
 };
-
 
 // ================= SEND OTP =================
 // ================= SEND OTP =================
@@ -413,7 +427,7 @@ const login = async (req, res) => {
       });
     }
 
-    // 🔥 BLOCK CHECK (MUST BE HERE)
+    // 🔥 BLOCK CHECK
     if (user.status === "Blocked") {
       return res.status(403).json({
         message: "Your account is blocked by admin",
@@ -421,6 +435,36 @@ const login = async (req, res) => {
       });
     }
 
+    // ✅ TRACK LOGIN INFO (PASTE HERE)
+    const ip =
+      req.headers["x-forwarded-for"]?.split(",")[0] ||
+      req.socket.remoteAddress ||
+      requestIp.getClientIp(req);
+
+    const parser = new UAParser(req.headers["user-agent"]);
+    const device = parser.getResult();
+    const deviceInfo = `${device.browser.name || "Unknown"} - ${device.os.name || "Unknown"}`;
+
+    let city = "Unknown";
+    let country = "Unknown";
+
+    if (ip) {
+      const geo = geoip.lookup(ip);
+      if (geo) {
+        city = geo.city || "Unknown";
+        country = geo.country || "Unknown";
+      }
+    }
+
+    user.lastActive = new Date();
+    user.lastLoginIp = ip;
+    user.lastLoginDevice = deviceInfo;
+    user.lastLoginCity = city;
+    user.lastLoginCountry = country;
+
+    await user.save();
+
+    // ✅ JWT AFTER TRACKING
     const jwtToken = jwt.sign(
       { email: user.email, _id: user._id },
       process.env.JWT_SECRET,

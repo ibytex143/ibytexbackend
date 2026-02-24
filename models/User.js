@@ -42,6 +42,28 @@ otpVerified: {
   default: false,
 },
 
+ipAddress: {
+  type: String,
+},
+
+deviceInfo: {
+  type: String,
+},
+
+city: {
+  type: String,
+},
+
+country: {
+  type: String,
+},
+
+lastActive: Date,
+lastLoginIp: String,
+lastLoginDevice: String,
+lastLoginCity: String,
+lastLoginCountry: String,
+
 
 
     // ✅ OPTIONAL
