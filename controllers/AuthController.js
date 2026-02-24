@@ -466,13 +466,13 @@ const ip = ipRaw ? ipRaw.split(",")[0].trim() : "Unknown";
   console.log("GeoIP error:", err.message);
 }
 
-    user.lastActive = new Date();
-    user.lastLoginIp = ip;
-    user.lastLoginDevice = deviceInfo;
-    user.lastLoginCity = city;
-    user.lastLoginCountry = country;
+user.lastActive = new Date();
+user.lastLoginIp = ip;
+user.lastLoginDevice = deviceInfo;
+user.lastLoginCity = city;
+user.lastLoginCountry = country;
 
-    await user.save();
+await user.save({ validateBeforeSave: false }); // 🔥 FIX
 
     // ✅ CREATE JWT
     const jwtToken = jwt.sign(
