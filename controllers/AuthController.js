@@ -38,10 +38,13 @@ const signup = async (req, res) => {
     }
 
     // ✅ GET IP (Put this FIRST)
-    const ip =
-      req.headers["x-forwarded-for"]?.split(",")[0] ||
-      req.socket.remoteAddress ||
-      requestIp.getClientIp(req);
+   // ✅ SAFE IP DETECTION
+const ipRaw =
+  req.headers["x-forwarded-for"] ||
+  req.socket.remoteAddress ||
+  requestIp.getClientIp(req);
+
+const ip = ipRaw ? ipRaw.split(",")[0].trim() : "Unknown";
 
     // ✅ GET DEVICE INFO
     const parser = new UAParser(req.headers["user-agent"]);
@@ -436,10 +439,13 @@ const login = async (req, res) => {
     }
 
     // ✅ TRACK LOGIN INFO
-    const ip =
-      req.headers["x-forwarded-for"]?.split(",")[0] ||
-      req.socket.remoteAddress ||
-      requestIp.getClientIp(req);
+  // ✅ SAFE IP DETECTION
+const ipRaw =
+  req.headers["x-forwarded-for"] ||
+  req.socket.remoteAddress ||
+  requestIp.getClientIp(req);
+
+const ip = ipRaw ? ipRaw.split(",")[0].trim() : "Unknown";
 
     const parser = new UAParser(req.headers["user-agent"]);
     const device = parser.getResult();
@@ -448,13 +454,17 @@ const login = async (req, res) => {
     let city = "Unknown";
     let country = "Unknown";
 
-    if (ip) {
-      const geo = geoip.lookup(ip);
-      if (geo) {
-        city = geo.city || "Unknown";
-        country = geo.country || "Unknown";
-      }
+  try {
+  if (ip) {
+    const geo = geoip.lookup(ip);
+    if (geo) {
+      city = geo.city || "Unknown";
+      country = geo.country || "Unknown";
     }
+  }
+} catch (err) {
+  console.log("GeoIP error:", err.message);
+}
 
     user.lastActive = new Date();
     user.lastLoginIp = ip;
