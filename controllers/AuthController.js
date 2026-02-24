@@ -403,6 +403,7 @@ const verifyOtp = async (req, res) => {
 
 
 // ================= LOGIN =================
+// ================= LOGIN =================
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -427,7 +428,6 @@ const login = async (req, res) => {
       });
     }
 
-    // 🔥 BLOCK CHECK
     if (user.status === "Blocked") {
       return res.status(403).json({
         message: "Your account is blocked by admin",
@@ -435,7 +435,7 @@ const login = async (req, res) => {
       });
     }
 
-    // ✅ TRACK LOGIN INFO (PASTE HERE)
+    // ✅ TRACK LOGIN INFO
     const ip =
       req.headers["x-forwarded-for"]?.split(",")[0] ||
       req.socket.remoteAddress ||
@@ -464,17 +464,19 @@ const login = async (req, res) => {
 
     await user.save();
 
-    // ✅ JWT AFTER TRACKING
+    // ✅ CREATE JWT
     const jwtToken = jwt.sign(
       { email: user.email, _id: user._id },
       process.env.JWT_SECRET,
       { expiresIn: "24h" }
     );
 
+    // ✅ RETURN BOTH (SAFE FIX)
     res.status(200).json({
       message: "Login successful",
       success: true,
-      jwtToken,
+      jwtToken: jwtToken,   // original
+      token: jwtToken,      // extra for frontend safety
       user: {
         name: user.name,
         email: user.email,
