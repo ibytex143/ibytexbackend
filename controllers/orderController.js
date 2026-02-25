@@ -125,10 +125,9 @@ const getDashboardSummary = async (req, res) => {
   try {
     const orders = await Order.find({ isDeletedByAdmin: false });
 
-    const totalUsdtReceived = orders.reduce(
-      (sum, o) => sum + (o.usdtAmount || 0),
-      0
-    );
+  const totalUsdtReceived = orders
+  .filter((o) => o.status === "COMPLETED")
+  .reduce((sum, o) => sum + Number(o.usdtAmount || 0), 0);
 
     const totalPendingInr = orders
       .filter((o) => o.status === "PENDING")
@@ -174,14 +173,13 @@ const getHistoryByDate = async (req, res) => {
       .populate("userId", "name email phone accountId telegramId")
       .sort({ createdAt: -1 });
 
-    const totalUsdt = orders.reduce(
-      (sum, o) => sum + (o.usdtAmount || 0),
-      0
-    );
+const totalUsdt = orders
+  .filter((o) => o.status === "COMPLETED")
+  .reduce((sum, o) => sum + Number(o.usdtAmount || 0), 0);
 
-    const totalInrPaid = orders
-      .filter((o) => o.status === "COMPLETED")
-      .reduce((sum, o) => sum + (o.totalINR || 0), 0);
+const totalInrPaid = orders
+  .filter((o) => o.status === "COMPLETED")
+  .reduce((sum, o) => sum + Number(o.totalINR || 0), 0);
 
     res.json({
       totalUsdt,
@@ -207,10 +205,9 @@ const getTodayStats = async (req, res) => {
       isDeletedByAdmin: false,
     });
 
-    const totalUsdt = orders.reduce(
-      (sum, o) => sum + Number(o.usdtAmount || 0),
-      0
-    );
+  const totalUsdt = orders
+  .filter((o) => o.status === "COMPLETED")
+  .reduce((sum, o) => sum + Number(o.usdtAmount || 0), 0);
 
     const pendingPayment = orders
       .filter((o) => o.status === "PENDING")
