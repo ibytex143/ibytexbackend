@@ -38,6 +38,11 @@ router.get(
   withdrawalController.getTodayWithdrawStats
 );
 router.get(
+  "/withdrawal/history",
+  adminAuth,
+  withdrawalController.getWithdrawalHistoryByDate
+);
+router.get(
   "/active-users/today",
   adminAuth,
   getTodayActiveUsers
