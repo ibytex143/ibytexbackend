@@ -502,6 +502,28 @@ await user.save({ validateBeforeSave: false }); // 🔥 FIX
   }
 };
 
+  // ================= CHECK EMAIL EXISTS =================
+const checkEmail = async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email) {
+      return res.json({ exists: false });
+    }
+
+    const user = await User.findOne({ email });
+
+    return res.json({
+      exists: !!user,
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      exists: false,
+    });
+  }
+};
+
 module.exports = {
   signup,
   login,
@@ -509,6 +531,7 @@ module.exports = {
   verifyOtp,
   forgotPassword,
   verifyResetOtp,
-  resetPassword
+  resetPassword,
+  checkEmail,
 };
 

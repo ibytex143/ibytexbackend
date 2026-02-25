@@ -5,7 +5,8 @@ const {
   verifyOtp,
   forgotPassword,
   verifyResetOtp,
-  resetPassword
+  resetPassword,
+  checkEmail
 } = require("../controllers/AuthController");
 const { signupValidation, loginValidation } = require('../middlewares/AuthValidtion');
 
@@ -19,6 +20,7 @@ router.post("/verify-otp", verifyOtp);
 router.post("/forgot-password", forgotPassword);
 router.post("/verify-reset-otp", verifyResetOtp);
 router.post("/reset-password", resetPassword);
+router.get("/check-email", checkEmail);
 
 
 

@@ -3,6 +3,13 @@ const User = require("../models/User");
 const sendEmail = require("../utils/sendEmail");
 const bcrypt = require("bcryptjs");
 
+
+
+
+
+
+
+
 // ================= SEND OTP =================
 exports.sendOtp = async (req, res) => {
   const { email } = req.body;
