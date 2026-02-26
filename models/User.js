@@ -64,6 +64,11 @@ lastLoginDevice: String,
 lastLoginCity: String,
 lastLoginCountry: String,
 
+     
+   fcmToken: {
+  type: String,
+  default: null,
+},
 
 
     // ✅ OPTIONAL

@@ -22,6 +22,28 @@ router.post("/verify-reset-otp", verifyResetOtp);
 router.post("/reset-password", resetPassword);
 router.get("/check-email", checkEmail);
 
+// 🔔 SAVE FCM TOKEN ROUTE
+router.post("/save-fcm-token", require("../middlewares/auth"), async (req, res) => {
+  try {
+    const User = require("../models/User");
+    const { fcmToken } = req.body;
+
+    if (!fcmToken) {
+      return res.status(400).json({ message: "Token required" });
+    }
+
+    await User.findByIdAndUpdate(req.user._id, {
+      fcmToken,
+    });
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("FCM SAVE ERROR:", err);
+    res.status(500).json({ message: "Failed to save token" });
+  }
+});
+
 
 
 module.exports = router;

@@ -1,27 +1,45 @@
 const Order = require("../models/Order");
+const sendNotification = require("../utils/sendNotification");
+const User = require("../models/User");
+
+ 
 
 // ================= USER → CREATE ORDER =================
 const createOrder = async (req, res) => {
   try {
-   const { usdtAmount, rate, totalINR } = req.body;
-     
-           if (req.user.status === "Blocked") {
-  return res.status(403).json({
-    message: "Account blocked"
-  });
-}
+    const { usdtAmount, rate, totalINR } = req.body;
 
-const order = await Order.create({
-  userId: req.user._id,
-  usdtAmount,
-  rate,
-  totalINR,
-  receiptUrl: req.file ? `/uploads/${req.file.filename}` : null,
-  status: "PENDING",
-});
+    if (req.user.status === "Blocked") {
+      return res.status(403).json({
+        message: "Account blocked"
+      });
+    }
 
+    const order = await Order.create({
+      userId: req.user._id,
+      usdtAmount,
+      rate,
+      totalINR,
+      receiptUrl: req.file ? `/uploads/${req.file.filename}` : null,
+      status: "PENDING",
+    });
+
+    // 🔔 SEND NOTIFICATION (SAFE)
+    try {
+      const user = await User.findById(req.user._id);
+      if (user?.fcmToken) {
+        await sendNotification(
+          user.fcmToken,
+          "Order Placed Successfully",
+          `Your order of ${usdtAmount} USDT has been placed.`
+        );
+      }
+    } catch (notifError) {
+      console.log("Notification error:", notifError.message);
+    }
 
     res.json({ success: true, orderId: order._id });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Order creation failed" });
@@ -32,7 +50,6 @@ const order = await Order.create({
 // ================= USER → GET MY ORDERS =================
 const getMyOrders = async (req, res) => {
   const orders = await Order.find({ userId: req.user.id })
-
     .sort({ createdAt: -1 });
 
   res.json(orders);
@@ -43,13 +60,12 @@ const getMyOrders = async (req, res) => {
 const getAllOrders = async (req, res) => {
   const orders = await Order.find({ isDeletedByAdmin: false })
     .populate("userId", "name email accountId phone telegramId")
-   
     .sort({ createdAt: -1 });
 
   res.json(orders);
 };
 
-// ================= ADMIN → COMPLETE ORDER =================
+
 // ================= ADMIN → COMPLETE ORDER =================
 const completeOrder = async (req, res) => {
   try {
@@ -69,7 +85,7 @@ const completeOrder = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // ✅ FINAL STATUS LOGIC
+    // FINAL STATUS LOGIC
     if (status === "SUCCESS") {
       order.status = "COMPLETED";
     } 
@@ -88,6 +104,33 @@ const completeOrder = async (req, res) => {
 
     await order.save();
 
+    // 🔔 SEND NOTIFICATION (SAFE)
+    try {
+      const user = await User.findById(order.userId);
+
+      if (user?.fcmToken) {
+
+        if (order.status === "COMPLETED") {
+          await sendNotification(
+            user.fcmToken,
+            "Order Completed",
+            `Your sell order of ${order.usdtAmount} USDT has been completed. ₹${order.totalINR} credited.`
+          );
+        }
+
+        if (order.status === "FAILED") {
+          await sendNotification(
+            user.fcmToken,
+            "Order Failed",
+            `Your order failed. Reason: ${order.adminNotes}`
+          );
+        }
+
+      }
+    } catch (notifError) {
+      console.log("Notification error:", notifError.message);
+    }
+
     res.json({ success: true, message: "Order updated successfully" });
 
   } catch (err) {
@@ -95,7 +138,6 @@ const completeOrder = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 
 // ================= ADMIN → DELETE ORDER =================
@@ -120,14 +162,15 @@ const deleteOrder = async (req, res) => {
   }
 };
 
+
 // ================= ADMIN DASHBOARD SUMMARY =================
 const getDashboardSummary = async (req, res) => {
   try {
     const orders = await Order.find({ isDeletedByAdmin: false });
 
-  const totalUsdtReceived = orders
-  .filter((o) => o.status === "COMPLETED")
-  .reduce((sum, o) => sum + Number(o.usdtAmount || 0), 0);
+    const totalUsdtReceived = orders
+      .filter((o) => o.status === "COMPLETED")
+      .reduce((sum, o) => sum + Number(o.usdtAmount || 0), 0);
 
     const totalPendingInr = orders
       .filter((o) => o.status === "PENDING")
@@ -151,6 +194,7 @@ const getDashboardSummary = async (req, res) => {
   }
 };
 
+
 // ================= ADMIN HISTORY BY DATE =================
 const getHistoryByDate = async (req, res) => {
   try {
@@ -173,13 +217,13 @@ const getHistoryByDate = async (req, res) => {
       .populate("userId", "name email phone accountId telegramId")
       .sort({ createdAt: -1 });
 
-const totalUsdt = orders
-  .filter((o) => o.status === "COMPLETED")
-  .reduce((sum, o) => sum + Number(o.usdtAmount || 0), 0);
+    const totalUsdt = orders
+      .filter((o) => o.status === "COMPLETED")
+      .reduce((sum, o) => sum + Number(o.usdtAmount || 0), 0);
 
-const totalInrPaid = orders
-  .filter((o) => o.status === "COMPLETED")
-  .reduce((sum, o) => sum + Number(o.totalINR || 0), 0);
+    const totalInrPaid = orders
+      .filter((o) => o.status === "COMPLETED")
+      .reduce((sum, o) => sum + Number(o.totalINR || 0), 0);
 
     res.json({
       totalUsdt,
@@ -191,6 +235,8 @@ const totalInrPaid = orders
     res.status(500).json({ message: "History fetch failed" });
   }
 };
+
+
 // ================= ADMIN DASHBOARD STATS =================
 const getTodayStats = async (req, res) => {
   try {
@@ -205,9 +251,9 @@ const getTodayStats = async (req, res) => {
       isDeletedByAdmin: false,
     });
 
-  const totalUsdt = orders
-  .filter((o) => o.status === "COMPLETED")
-  .reduce((sum, o) => sum + Number(o.usdtAmount || 0), 0);
+    const totalUsdt = orders
+      .filter((o) => o.status === "COMPLETED")
+      .reduce((sum, o) => sum + Number(o.usdtAmount || 0), 0);
 
     const pendingPayment = orders
       .filter((o) => o.status === "PENDING")
@@ -230,7 +276,6 @@ const getTodayStats = async (req, res) => {
 };
 
 
-
 module.exports = {
   createOrder,
   getMyOrders,
@@ -240,5 +285,4 @@ module.exports = {
   getDashboardSummary,
   getHistoryByDate,
   getTodayStats,
-  
 };
