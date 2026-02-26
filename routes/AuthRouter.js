@@ -9,7 +9,9 @@ const {
   checkEmail
 } = require("../controllers/AuthController");
 const { signupValidation, loginValidation } = require('../middlewares/AuthValidtion');
-
+const express = require("express");
+const auth = require("../middlewares/auth");
+const User = require("../models/User");
 
 const router = require('express').Router();
 
@@ -23,9 +25,8 @@ router.post("/reset-password", resetPassword);
 router.get("/check-email", checkEmail);
 
 // 🔔 SAVE FCM TOKEN ROUTE
-router.post("/save-fcm-token", require("../middlewares/auth"), async (req, res) => {
+router.post("/save-fcm-token", auth, async (req, res) => {
   try {
-    const User = require("../models/User");
     const { fcmToken } = req.body;
 
     if (!fcmToken) {
@@ -37,7 +38,6 @@ router.post("/save-fcm-token", require("../middlewares/auth"), async (req, res) 
     });
 
     res.json({ success: true });
-
   } catch (err) {
     console.error("FCM SAVE ERROR:", err);
     res.status(500).json({ message: "Failed to save token" });

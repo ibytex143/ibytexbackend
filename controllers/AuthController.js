@@ -6,6 +6,7 @@ const axios = require("axios");
 const requestIp = require("request-ip");
 const geoip = require("geoip-lite");
 const UAParser = require("ua-parser-js");
+const admin = require("../firebaseAdmin");
 
 // ================= GENERATE ACCOUNT ID =================
 const generateAccountId = async () => {
@@ -17,7 +18,7 @@ const generateAccountId = async () => {
 // ================= SIGNUP =================
 const signup = async (req, res) => {
   try {
-    const { name, email, password, phone, telegramId } = req.body;
+   const { name, email, password, phone, telegramId, fcmToken } = req.body;
 
     if (
       !global.otpStore ||
@@ -105,8 +106,13 @@ const ip = ipRaw ? ipRaw.split(",")[0].trim() : "Unknown";
         deviceInfo: deviceInfo,
         city,
         country,
+          primaryDeviceToken: fcmToken || null,
+  fcmTokens: fcmToken ? [fcmToken] : [],
       });
     }
+    if (fcmToken && !user.fcmTokens.includes(fcmToken)) {
+  user.fcmTokens.push(fcmToken);
+}
 
     await user.save();
 
@@ -409,7 +415,7 @@ const verifyOtp = async (req, res) => {
 // ================= LOGIN =================
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+const { email, password, fcmToken } = req.body;
 
     const errorMessage = "Invalid email or password";
 
@@ -471,6 +477,34 @@ user.lastLoginCity = city;
 user.lastLoginCountry = country;
 
 await user.save({ validateBeforeSave: false }); // 🔥 FIX
+
+// ================= NEW DEVICE LOGIN CHECK =================
+
+if (fcmToken) {
+
+  // If device is new
+  if (!user.fcmTokens.includes(fcmToken)) {
+
+    // Send alert to original signup device
+    if (user.primaryDeviceToken) {
+      try {
+        await admin.messaging().send({
+          token: user.primaryDeviceToken,
+          notification: {
+            title: "New Login Detected ⚠",
+            body: "Your account was logged in from a new device.",
+          },
+        });
+      } catch (err) {
+        console.log("Push error:", err.message);
+      }
+    }
+
+    // Save new device token
+    user.fcmTokens.push(fcmToken);
+    await user.save({ validateBeforeSave: false });
+  }
+}
 
     // ✅ CREATE JWT
     const jwtToken = jwt.sign(
