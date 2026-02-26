@@ -6,7 +6,7 @@ const axios = require("axios");
 const requestIp = require("request-ip");
 const geoip = require("geoip-lite");
 const UAParser = require("ua-parser-js");
-const admin = require("../firebaseAdmin");
+const admin = require("../config/firebaseAdmin");
 
 // ================= GENERATE ACCOUNT ID =================
 const generateAccountId = async () => {
