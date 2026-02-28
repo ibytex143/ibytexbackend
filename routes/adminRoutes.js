@@ -48,6 +48,7 @@ router.get(
   getTodayActiveUsers
 );
 
+router.put("/update-credentials", updateAdminCredentials);
 
 
 module.exports = router;

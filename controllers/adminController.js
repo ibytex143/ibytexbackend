@@ -52,6 +52,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Admin = require("../models/Admin");
 
+
 const adminLogin = async (req, res) => {
   try {
     console.log("JWT_SECRET:", process.env.JWT_SECRET);
@@ -99,6 +100,29 @@ const adminLogin = async (req, res) => {
   }
 };
 
+const updateAdminCredentials = async (req, res) => {
+  try {
+    const { newEmail, newPassword } = req.body;
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await Admin.findOneAndUpdate(
+      {},   // kyunki usually ek hi admin hota hai
+      {
+        email: newEmail,
+        password: hashedPassword
+      }
+    );
+
+    res.json({ message: "Admin updated successfully" });
+
+  } catch (error) {
+    res.status(500).json({ error: "Update failed" });
+  }
+};
+
+
 module.exports = {
   adminLogin,
+  updateAdminCredentials
 };
